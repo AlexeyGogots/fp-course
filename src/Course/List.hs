@@ -245,7 +245,10 @@ find predicate = foldRight (\a as -> if predicate a then Full a else as) Empty
 -- True
 
 lengthGT4 :: List a -> Bool
-lengthGT4 as = (>4) . length $ take 5 as
+lengthGT4 as = 
+    case drop 4 as of
+    Nil -> False
+    _ -> True
 
 
 -- | Reverse a list.
@@ -260,7 +263,7 @@ lengthGT4 as = (>4) . length $ take 5 as
 --
 -- prop> \x -> let types = x :: Int in reverse (x :. Nil) == x :. Nil
 reverse :: List a -> List a
-reverse = error "todo: Course.List#reverse"
+reverse = foldLeft (flip (:.)) Nil
 
 -- | Produce an infinite `List` that seeds with the given value at its head,
 -- then runs the given function for subsequent elements
@@ -283,7 +286,7 @@ produce f x = x :. produce f (f x)
 --
 -- prop> \x -> let types = x :: Int in notReverse (x :. Nil) == x :. Nil
 notReverse :: List a -> List a
-notReverse = error "todo: Is it even possible?"
+notReverse = id
 
 ---- End of list exercises
 
