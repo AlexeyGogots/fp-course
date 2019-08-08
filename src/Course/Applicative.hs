@@ -47,14 +47,12 @@ instance Applicative ExactlyOne where
   pure ::
     a
     -> ExactlyOne a
-  pure =
-    error "todo: Course.Applicative pure#instance ExactlyOne"
+  pure = ExactlyOne 
   (<*>) ::
     ExactlyOne (a -> b)
     -> ExactlyOne a
     -> ExactlyOne b
-  (<*>) =
-    error "todo: Course.Applicative (<*>)#instance ExactlyOne"
+  (<*>) (ExactlyOne f) (ExactlyOne a) = ExactlyOne (f a)
 
 -- | Insert into a List.
 --
@@ -63,17 +61,14 @@ instance Applicative ExactlyOne where
 -- >>> (+1) :. (*2) :. Nil <*> 1 :. 2 :. 3 :. Nil
 -- [2,3,4,2,4,6]
 instance Applicative List where
-  pure ::
-    a
-    -> List a
-  pure =
-    error "todo: Course.Applicative pure#instance List"
+  pure :: a -> List a
+  pure a = a :. Nil
   (<*>) ::
     List (a -> b)
     -> List a
     -> List b
-  (<*>) =
-    error "todo: Course.Apply (<*>)#instance List"
+  (<*>) f a = 
+    flatMap (`map` a) f 
 
 -- | Insert into an Optional.
 --
@@ -91,21 +86,20 @@ instance Applicative Optional where
   pure ::
     a
     -> Optional a
-  pure =
-    error "todo: Course.Applicative pure#instance Optional"
+  pure = Full
+    
   (<*>) ::
     Optional (a -> b)
     -> Optional a
     -> Optional b
-  (<*>) =
-    error "todo: Course.Apply (<*>)#instance Optional"
+  (<*>) = applyOptional 
 
 -- | Insert into a constant function.
 --
 -- >>> ((+) <*> (+10)) 3
 -- 16
 --
--- >>> ((+) <*> (+5)) 3
+-- >>> ((+)  <*> (+5)) 3
 -- 11
 --
 -- >>> ((+) <*> (+5)) 1
@@ -121,15 +115,15 @@ instance Applicative Optional where
 instance Applicative ((->) t) where
   pure ::
     a
-    -> ((->) t a)
-  pure =
-    error "todo: Course.Applicative pure#((->) t)"
+    -> (t -> a)
+  pure = const
+
   (<*>) ::
-    ((->) t (a -> b))
-    -> ((->) t a)
-    -> ((->) t b)
-  (<*>) =
-    error "todo: Course.Apply (<*>)#instance ((->) t)"
+    (t -> (a -> b))
+    -> (t -> a)
+    -> t -> b
+  (<*>) f g t = 
+    f t (g t)
 
 
 -- | Apply a binary function in the environment.
@@ -152,13 +146,13 @@ instance Applicative ((->) t) where
 -- >>> lift2 (+) length sum (listh [4,5,6])
 -- 18
 lift2 ::
-  Applicative k =>
+  Applicative f =>
   (a -> b -> c)
-  -> k a
-  -> k b
-  -> k c
-lift2 =
-  error "todo: Course.Applicative#lift2"
+  -> f a
+  -> f b
+  -> f c
+lift2 f a b = pure f <*> a <*> b
+  
 
 -- | Apply a ternary function in the environment.
 -- /can be written using `lift2` and `(<*>)`./
@@ -184,15 +178,14 @@ lift2 =
 -- >>> lift3 (\a b c -> a + b + c) length sum product (listh [4,5,6])
 -- 138
 lift3 ::
-  Applicative k =>
+  Applicative f =>
   (a -> b -> c -> d)
-  -> k a
-  -> k b
-  -> k c
-  -> k d
-lift3 =
-  error "todo: Course.Applicative#lift3"
-
+  -> f a
+  -> f b
+  -> f c
+  -> f d
+lift3 f a b c =
+  pure f <*> a <*> b <*> c
 -- | Apply a quaternary function in the environment.
 -- /can be written using `lift3` and `(<*>)`./
 --
@@ -217,23 +210,22 @@ lift3 =
 -- >>> lift4 (\a b c d -> a + b + c + d) length sum product (sum . filter even) (listh [4,5,6])
 -- 148
 lift4 ::
-  Applicative k =>
+  Applicative f =>
   (a -> b -> c -> d -> e)
-  -> k a
-  -> k b
-  -> k c
-  -> k d
-  -> k e
-lift4 =
-  error "todo: Course.Applicative#lift4"
+  -> f a
+  -> f b
+  -> f c
+  -> f d
+  -> f e
+lift4 f a b c d=
+  pure f <*> a <*> b <*> c <*> d
 
 -- | Apply a nullary function in the environment.
 lift0 ::
-  Applicative k =>
+  Applicative f =>
   a
-  -> k a
-lift0 =
-  error "todo: Course.Applicative#lift0"
+  -> f a
+lift0 = pure
 
 -- | Apply a unary function in the environment.
 -- /can be written using `lift0` and `(<*>)`./
@@ -247,12 +239,11 @@ lift0 =
 -- >>> lift1 (+1) (1 :. 2 :. 3 :. Nil)
 -- [2,3,4]
 lift1 ::
-  Applicative k =>
+  Applicative f =>
   (a -> b)
-  -> k a
-  -> k b
-lift1 =
-  error "todo: Course.Applicative#lift1"
+  -> f a
+  -> f b
+lift1 f a = pure f <*> a 
 
 -- | Apply, discarding the value of the first argument.
 -- Pronounced, right apply.
@@ -278,8 +269,7 @@ lift1 =
   -> k b
   -> k b
 (*>) =
-  error "todo: Course.Applicative#(*>)"
-
+  lift2 (flip const) 
 -- | Apply, discarding the value of the second argument.
 -- Pronounced, left apply.
 --
@@ -304,7 +294,7 @@ lift1 =
   -> k a
   -> k b
 (<*) =
-  error "todo: Course.Applicative#(<*)"
+  lift2 const 
 
 -- | Sequences a list of structures to a structure of list.
 --
