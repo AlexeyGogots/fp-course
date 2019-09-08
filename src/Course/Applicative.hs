@@ -317,7 +317,7 @@ sequence ::
   List (k a)
   -> k (List a)
 sequence =
-  error "todo: Course.Applicative#sequence"
+  foldRight (lift2 (:.)) (pure Nil)
 
 -- | Replicate an effect a given number of times.
 --
@@ -338,12 +338,14 @@ sequence =
 -- >>> replicateA 3 ('a' :. 'b' :. 'c' :. Nil)
 -- ["aaa","aab","aac","aba","abb","abc","aca","acb","acc","baa","bab","bac","bba","bbb","bbc","bca","bcb","bcc","caa","cab","cac","cba","cbb","cbc","cca","ccb","ccc"]
 replicateA ::
-  Applicative k =>
+  Applicative f =>
   Int
-  -> k a
-  -> k (List a)
-replicateA =
-  error "todo: Course.Applicative#replicateA"
+  -> f a
+  -> f (List a)
+-- replicateA n fa = let f = replicate n fa in sequence f
+replicateA n fa = sequence (replicate n fa) 
+  
+  
 
 -- | Filter a list with a predicate that produces an effect.
 --
@@ -370,8 +372,8 @@ filtering ::
   (a -> k Bool)
   -> List a
   -> k (List a)
-filtering =
-  error "todo: Course.Applicative#filtering"
+  -> f (List a)
+filtering p = foldRight (\a fas -> lift2 (\x as -> if x then a :. as else as) (p a) fas) (pure Nil) 
 
 -----------------------
 -- SUPPORT LIBRARIES --
