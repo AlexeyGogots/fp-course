@@ -85,48 +85,55 @@ printFile ::
   FilePath
   -> Chars
   -> IO ()
-printFile =
-  error "todo: Course.FileIO#printFile"
+printFile path content = 
+  putStrLn ("============ "++path) >> putStrLn content
 
 -- Given a list of (file name and file contents), print each.
 -- Use @printFile@.
 printFiles ::
   List (FilePath, Chars)
   -> IO ()
-printFiles =
-  error "todo: Course.FileIO#printFiles"
+printFiles xs =
+  let actions = map (uncurry printFile) xs 
+  in let y = sequence actions in void y
 
 -- Given a file name, return (file name and file contents).
 -- Use @readFile@.
 getFile ::
   FilePath
   -> IO (FilePath, Chars)
-getFile =
-  error "todo: Course.FileIO#getFile"
+getFile path =
+  (\ content -> (path, content)) <$> readFile path 
 
 -- Given a list of file names, return list of (file name and file contents).
 -- Use @getFile@.
 getFiles ::
   List FilePath
   -> IO (List (FilePath, Chars))
-getFiles =
-  error "todo: Course.FileIO#getFiles"
+getFiles xs =
+  let actions = map getFile xs 
+  in sequence actions
 
 -- Given a file name, read it and for each line in that file, read and print contents of each.
 -- Use @getFiles@, @lines@, and @printFiles@.
 run ::
   FilePath
   -> IO ()
-run =
-  error "todo: Course.FileIO#run"
+run file =
+  lines <$> readFile file 
+  >>= getFiles
+  >>= printFiles
 
 -- /Tip:/ use @getArgs@ and @run@
 main ::
   IO ()
 main =
-  error "todo: Course.FileIO#main"
+  do 
+    args <- getArgs
+    case args of 
+      file :. _ ->  run file
+      _ -> putStrLn "No argument"
 
-----
 
 -- Was there was some repetition in our solution?
 -- ? `sequence . (<$>)`

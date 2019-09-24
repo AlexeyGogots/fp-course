@@ -158,7 +158,7 @@ infixl 1 >>=
   -> (a -> k b)
   -> a
   -> k c
-(<=<) bfc afb a = bfc =<< afb a  
+(<=<) bfc afb a = afb a >>= bfc 
 
 infixr 1 <=<
 
