@@ -38,7 +38,7 @@ exec ::
   State s a
   -> s
   -> s
-exec (State f) = snd . f 
+exec f s = snd $ runState f s
 
 -- | Run the `State` seeded with `s` and retrieve the resulting value.
 --
@@ -99,6 +99,10 @@ instance Applicative (State s) where
     -> State s a
     -> State s b
   (<*>) f m = (<$> m) =<< f 
+  -- (<*>) fab fa = State (\s ->
+  --   let (ab, s') = runState fab s
+  --       (a, s'') = runState fa s'
+  --   in  (ab a, s''))
 
 -- | Implement the `Monad` instance for `State s`.
 --
@@ -115,8 +119,7 @@ instance Monad (State s) where
     (a -> State s b)
     -> State s a
     -> State s b
-  (=<<) f m = State (\s -> let (a, s') = runState m s in runState (f a) s') 
-    
+  (=<<) fsb sa = State (\s -> let (a, s') = runState sa s in runState (fsb a) s')   
 
 -- | Find the first element in a `List` that satisfies a given predicate.
 -- It is possible that no element is found, hence an `Optional` result.
@@ -137,14 +140,16 @@ findM ::
   (a -> f Bool)
   -> List a
   -> f (Optional a)
-findM p =
-  -- foldRight (\ a foa -> let fr = p a in (\r -> if r then pure (Full a) else foa ) =<< fr) (pure Empty)
-  foldRight (\a -> lift2 (\r oa -> if r then Full a else oa) (p a)) (pure Empty)
+findM p = 
+  foldRight (\a foa -> (\b -> if b then pure (Full a) else foa) =<< p a) (pure Empty)  
+  -- foldRight (\a -> lift2 (\r oa -> if r then Full a else oa ) (p a)) (pure Empty)
+  -- foldRight (\a foa -> pure (\ r oa -> if r then Full a else oa) <*> p a <*> foa) (pure Empty)
+  -- foldRight (\a foa -> ((\ r oa -> if r then Full a else oa) <$> p a) <*> foa) (pure Empty)
 
 -- | Find the first element in a `List` that repeats.
 -- It is possible that no element repeats, hence an `Optional` result.
 --
--- /Tip:/ Use `findM` and `State` with a @Data.Set#Set@.
+-- /T\ip:/ Use `findM` and `State` with a @Data.Set#Set@.
 --
 -- prop> \xs -> case firstRepeat xs of Empty -> let xs' = hlist xs in nub xs' == xs'; Full x -> length (filter (== x) xs) > 1
 -- prop> \xs -> case firstRepeat xs of Empty -> True; Full x -> let (l, (rx :. rs)) = span (/= x) xs in let (l2, r2) = span (/= x) rs in let l3 = hlist (l ++ (rx :. Nil) ++ l2) in nub l3 == l3
@@ -152,8 +157,9 @@ firstRepeat ::
   Ord a =>
   List a
   -> Optional a
-firstRepeat =
-  error "todo: Course.State#firstRepeat"
+firstRepeat as = 
+  eval (findM f as) S.empty
+  where f a = State (\s -> (S.member a s, S.insert a s))
 
 -- | Remove all duplicate elements in a `List`.
 -- /Tip:/ Use `filtering` and `State` with a @Data.Set#Set@.
