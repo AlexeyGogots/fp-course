@@ -171,10 +171,11 @@ distinct ::
   Ord a =>
   List a
   -> List a
-distinct =
-  error "todo: Course.State#distinct"
+distinct as =
+  eval (filtering f as) S.empty
+  where f a = State (\s -> (not (S.member a s), S.insert a s))
 
--- | A happy number is a positive integer, where the sum of the square of its digits eventually reaches 1 after repetition.
+  -- | A happy number is a positive integer, where the sum of the square of its digits eventually reaches 1 after repetition.
 -- In contrast, a sad number (not a happy number) is where the sum of the square of its digits never reaches 1
 -- because it results in a recurring sequence.
 --
@@ -198,5 +199,17 @@ distinct =
 isHappy ::
   Integer
   -> Bool
-isHappy =
-  error "todo: Course.State#isHappy"
+isHappy n =
+  let f n = toInteger $ sum $ square <$> digitToInt <$> show' n in  
+  Course.Optional.contains  1 $ firstRepeat $ produce f n
+
+  -- produce :: (a -> a) -> a -> List a
+  -- firstRepeat :: Ord a => List a -> Optional a
+  -- join :: Monad f => f (f a) -> f a  == f.f a
+  -- Course.Optional.contains :: Eq a => a -> Optional a -> Bool
+  -- digitToInt :: Char -> Int
+  -- show' :: Show a => a -> List Char
+  -- digitToInt <$> show' 44
+
+square :: Num a => a -> a
+square = join (*) 

@@ -85,55 +85,51 @@ printFile ::
   FilePath
   -> Chars
   -> IO ()
-printFile path content = 
-  putStrLn ("============ "++path) >> putStrLn content
+printFile n c =
+  putStrLn ("============ " ++ n) >> putStrLn c
 
 -- Given a list of (file name and file contents), print each.
 -- Use @printFile@.
 printFiles ::
   List (FilePath, Chars)
   -> IO ()
-printFiles xs =
-  let actions = map (uncurry printFile) xs 
-  in let y = sequence actions in void y
+printFiles la = void $ sequence (uncurry printFile <$> la)
+
+
+-- void (sequence ((printFile . uncurry) <$> la))
 
 -- Given a file name, return (file name and file contents).
 -- Use @readFile@.
 getFile ::
   FilePath
   -> IO (FilePath, Chars)
-getFile path =
-  (\ content -> (path, content)) <$> readFile path 
+getFile f = (\c -> (f, c)) <$> readFile f
+
 
 -- Given a list of file names, return list of (file name and file contents).
 -- Use @getFile@.
 getFiles ::
   List FilePath
   -> IO (List (FilePath, Chars))
-getFiles xs =
-  let actions = map getFile xs 
-  in sequence actions
+getFiles la = let x = (getFile <$> la) in sequence x
 
 -- Given a file name, read it and for each line in that file, read and print contents of each.
 -- Use @getFiles@, @lines@, and @printFiles@.
 run ::
   FilePath
   -> IO ()
-run file =
-  lines <$> readFile file 
-  >>= getFiles
-  >>= printFiles
+run f = printFiles =<< getFiles =<< lines <$> (readFile f)
+
+foo :: List FilePath -> IO () 
+foo Nil = putStrLn "Error"
+foo (x :. _) = run x
 
 -- /Tip:/ use @getArgs@ and @run@
 main ::
   IO ()
-main =
-  do 
-    args <- getArgs
-    case args of 
-      file :. _ ->  run file
-      _ -> putStrLn "No argument"
+main = foo =<< getArgs  
 
+----
 
 -- Was there was some repetition in our solution?
 -- ? `sequence . (<$>)`
