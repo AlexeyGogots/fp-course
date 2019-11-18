@@ -71,8 +71,8 @@ instance Monad k => Applicative (StateT s k) where
   (<*>) sfab sfa = 
     let f_abs = runStateT sfab in
     let f_a = runStateT sfa in
-    let abs (ab, s) = (\(a,s') -> (ab a, s')) <$> f_a s in
-    StateT (\s -> abs =<< f_abs s )
+    let abs' (ab, s) = (\(a,s') -> (ab a, s')) <$> f_a s in
+    StateT (\s -> abs' =<< f_abs s )
     
 
 -- | Implement the `Monad` instance for @StateT s k@ given a @Monad k@.
@@ -285,21 +285,45 @@ instance Monad k => Applicative (OptionalT k) where
     -> OptionalT k a
     -> OptionalT k b
   (<*>) (OptionalT fog) (OptionalT foa) = 
-    -- OptionalT ((\og -> (\oa -> onFull (_todo) og) <$> foa) =<< fog)
-    OptionalT (lift2 (<*>) fog foa)
-    
+    OptionalT (onFull (\g -> (\oa -> g <$> oa) <$> foa) =<< fog)
 
--- | Implement the `Monad` instance for `OptionalT k` given a Monad k.
+-- OptionalT (lift2 (<*>) fog foa)
+
+-- OptionalT (onFull' =<< fog)
+-- where 
+--   onFull' og  = 
+--     case og of
+--       Empty -> pure Empty
+--       Full g -> (\oa -> g <$> oa) <$> foa
+      
+-- onFull ::
+--   Applicative f =>
+--   (t -> f (Optional a))
+--   -> Optional t
+--   -> f (Optional a)
+-- onFull g o =
+--   case o of
+--     Empty ->
+--       pure Empty
+--     Full a ->
+--       g a
+
+    -- | Implement the `Monad` instance for `OptionalT f` given a Monad f.
 --
 -- >>> runOptionalT $ (\a -> OptionalT (Full (a+1) :. Full (a+2) :. Nil)) =<< OptionalT (Full 1 :. Empty :. Nil)
 -- [Full 2,Full 3,Empty]
-instance Monad k => Monad (OptionalT k) where
+instance Monad f => Monad (OptionalT f) where
   (=<<) ::
-    (a -> OptionalT k b)
-    -> OptionalT k a
-    -> OptionalT k b
-  (=<<) =
-    error "todo: Course.StateT (=<<)#instance (OptionalT k)"
+    (a -> OptionalT f b)
+    -> OptionalT f a
+    -> OptionalT f b
+  (=<<) g (OptionalT foa) =
+    OptionalT (f' =<< foa)
+    where 
+      f' oa =
+        case oa of 
+        Empty -> pure Empty 
+        Full a -> runOptionalT (g a)
 
 -- | A `Logger` is a pair of a list of log values (`[l]`) and an arbitrary value (`a`).
 data Logger l a =
