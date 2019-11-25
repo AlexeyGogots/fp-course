@@ -202,7 +202,7 @@ isHappy ::
   Integer
   -> Bool
 isHappy n =
-  let f n = toInteger $ sum $ square <$> digitToInt <$> show' n in  
+  let f m = toInteger $ sum $ square <$> digitToInt <$> show' m in  
   Course.Optional.contains  1 $ firstRepeat $ produce f n
 
   -- produce :: (a -> a) -> a -> List a
