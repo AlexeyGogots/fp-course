@@ -4,6 +4,7 @@
 
 module Course.Comonad where
 
+import Course.List
 import Course.Core
 import Course.ExactlyOne
 import Course.Extend
@@ -29,8 +30,7 @@ instance Comonad ExactlyOne where
   copure ::
     ExactlyOne a
     -> a
-  copure =
-    error "todo: Course.Comonad copure#instance ExactlyOne"
+  copure (ExactlyOne a) = a
 
 -- | Witness that all things with (<<=) and copure also have (<$>).
 --
@@ -41,5 +41,4 @@ instance Comonad ExactlyOne where
   (a -> b)
   -> k a
   -> k b
-(<$$>) =
-  error "todo: Course.Comonad#(<$>)"
+(<$$>) g fa = (g . copure) <<= fa

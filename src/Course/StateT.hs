@@ -218,7 +218,10 @@ distinctF ::
   -> Optional (List a)
 distinctF as =
   evalT (filtering f as) S.empty
-  where f a = StateT (\s -> if a > 100 then Empty else Full (not (S.member a s), S.insert a s)) 
+  where f a = StateT (\s ->
+    if a > 100
+    then Empty
+    else Full (not (S.member a s), S.insert a s)) 
 
 distinctF2 ::
   (Ord a, Num a) =>
