@@ -372,7 +372,6 @@ filtering ::
   (a -> k Bool)
   -> List a
   -> k (List a)
-  -> f (List a)
 filtering p = foldRight (\a fas -> lift2 (\x as -> if x then a :. as else as) (p a) fas) (pure Nil) 
 
 -----------------------
