@@ -25,7 +25,9 @@ Functions that might help
 
 -}
 
+readDict :: FilePath -> IO (List Chars)
 
+ababab 
 -- Return all anagrams of the given string
 -- that appear in the given dictionary file.
 anagrams ::
@@ -33,7 +35,7 @@ anagrams ::
   -> FilePath
   -> IO (List Chars)
 anagrams =
-  error "todo: Course.Anagrams#anagrams"
+  readDict
 
 -- Compare two strings for equality, ignoring case
 equalIgnoringCase ::
